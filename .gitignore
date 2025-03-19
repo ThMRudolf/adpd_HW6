@@ -178,10 +178,10 @@ cython_debug/
 
 # ignore data files
  data/
- .csv
- .txt
- .xml
- .xlsx
+ *.csv
+ *.txt
+ *.xml
+ *.xlsx
 
  # ignore config files and credencials
   config.ini
