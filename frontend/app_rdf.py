@@ -4,112 +4,56 @@ Proof of concept application for inflation, exchange rate and interest rate.
 Version 0.0.0
 """
 
-from io import StringIO
-import pickle
 import streamlit as st
 import pandas as pd
-from great_tables import GT
 
-# --- setup
-SERIE = [
-    "Exchange",
-    "Inflation",
-    "Interest",
-]
+import statsmodels.api as sm
 
-# --- Read data
-df_predictions_by_rate = pd.read_parquet(
-    "data/model/models_summary.parquet"
+# Load the models' summary from the .parquet file
+models_summary = pd.read_parquet('data/model/models_summary.parquet')
+
+# Extract the model parameters
+params_tipo_de_cambio_tasa_de_interes = models_summary.loc[models_summary['model'] == 'tipo_de_cambio ~ tasa_de_interes', 'params'].values[0]
+params_tasa_de_interes_inflacion = models_summary.loc[models_summary['model'] == 'tasa_de_interes ~ inflacion', 'params'].values[0]
+params_tipo_de_cambio_inflacion = models_summary.loc[models_summary['model'] == 'tipo_de_cambio ~ inflacion', 'params'].values[0]
+
+# Convert the parameters to a dictionary
+params_tipo_de_cambio_tasa_de_interes = params_tipo_de_cambio_tasa_de_interes
+params_tasa_de_interes_inflacion = params_tasa_de_interes_inflacion
+params_tipo_de_cambio_inflacion = params_tipo_de_cambio_inflacion
+
+# Predict values using the model parameters
+def predict_tipo_de_cambio_tasa_de_interes(interes_rate):
+    return params_tipo_de_cambio_tasa_de_interes['const'] + params_tipo_de_cambio_tasa_de_interes['interes_rate'] * interes_rate
+
+def predict_tasa_de_interes_inflacion(inflation):
+    return params_tasa_de_interes_inflacion['const'] + params_tasa_de_interes_inflacion['inflation'] * inflation
+
+def predict_tipo_de_cambio_inflacion(inflation):
+    return params_tipo_de_cambio_inflacion['const'] + params_tipo_de_cambio_inflacion['inflation'] * inflation
+
+# Streamlit app
+st.title('Economic Predictions')
+
+option = st.selectbox(
+    'Select the prediction model:',
+    ('Exchange Rate from Interest Rate', 'Interest Rate from Inflation', 'Exchange Rate from Inflation')
 )
-#df_predictions_by_rate.
-################################# App #################################
-st.title("Relation Exchange/Inflation/Interest App")
 
-tab1, tab2, tab3 = st.tabs(
-    [
-        "📈 Exchange - Interest",
-        "📈 Inflation - Interest",
-        "📈 Exchange - Inflation",
-    ]
-)
+if option == 'Exchange Rate from Interest Rate':
+    interes_rate = st.number_input('Enter Interest Rate:')
+    if st.button('Predict'):
+        result = predict_tipo_de_cambio_tasa_de_interes(interes_rate)
+        st.write(f'Predicted Exchange Rate: {result}')
 
-# tab 1
-with tab1:
-    st.header("Exchange")
-    st.subheader("Exchange App")
-    # --- Drop box
-    selected_rate_tab1 = st.selectbox(
-        label="exchange_rate",
-        options=SERIE,
-        index=0,
-        placeholder="Select a serie",
-    )
-    interest_tab1 = st.number_input("interest rate tab1", format="%f", value=3., step=1.0)
-    inflation_tab1 = st.number_input("inflation tab1", format="%f", step=1.0, value=1.0)
+elif option == 'Interest Rate from Inflation':
+    inflation = st.number_input('Enter Inflation Rate:')
+    if st.button('Predict'):
+        result = predict_tasa_de_interes_inflacion(inflation)
+        st.write(f'Predicted Interest Rate: {result}')
 
-    # --- Format input into pandas dataframe
-    user_entry_tab1 = pd.DataFrame(
-        [
-            {
-                "interest_rate": interest_tab1,
-                "inflation": inflation_tab1,
-            }
-        ]
-    )
-    ## --- rate estimation
-    #estimated_exchange_rate = float(
-    #    df_predictions_by_rate.query("exchange_rate == @selected_rate")[
-    #        "Exchange"
-    #    ].values[0]
-    #)
-
-    # --- Display
-    #st.metric("Estimated Exchange Rate", f"$ {estimated_exchange_rate}")
-
-# tab 2
-with tab2:
-    st.header("Interest")
-    st.subheader(" Interest App")
-    # --- Drop box
-    selected_rate_tab2 = st.selectbox(
-        label="interest_rate",
-        options=SERIE,
-        index=0,
-        placeholder="Select a serie",
-    )
-    exchange_tab2 = st.number_input("exchange rate tab2", format="%f", value=3., step=1.0)
-    inflation_tab2 = st.number_input("inflation tab2", format="%f", step=1.0, value=1.0)
-
-    # --- Format input into pandas dataframe
-    user_entry_tab2 = pd.DataFrame(
-        [
-            {
-                "exchange_rate": exchange_tab2,
-                "inflation": inflation_tab2,
-            }
-        ]
-    )
-
-# tab 3
-with tab3:
-    st.header("Inflation")
-    st.subheader(" inflation App")
-    # --- Drop box
-    selected_rate_tab3 = st.selectbox(
-        label="inflation_rate",
-        options=SERIE,
-        index=0,
-        placeholder="Select a serie",
-    )
-    exchange_tab3= st.number_input("exchange rate tab3", format="%f", value=3., step=1.0)
-    interest_tab3= st.number_input("interest rate tab3", format="%f", value=3., step=1.0)
-
-    # --- Format input into pandas dataframe
-    user_entry_tab3 = pd.DataFrame(
-        [
-            {
-                "exchange_rate": exchange_tab3,
-                "Interest": interest_tab3,
-            }
-        ]
-    )
+elif option == 'Exchange Rate from Inflation':
+    inflation = st.number_input('Enter Inflation Rate:')
+    if st.button('Predict'):
+        result = predict_tipo_de_cambio_inflacion(inflation)
+        st.write(f'Predicted Exchange Rate: {result}')
