@@ -17,10 +17,6 @@ params_tipo_de_cambio_tasa_de_interes = models_summary.loc[models_summary['model
 params_tasa_de_interes_inflacion = models_summary.loc[models_summary['model'] == 'tasa_de_interes ~ inflacion', 'params'].values[0]
 params_tipo_de_cambio_inflacion = models_summary.loc[models_summary['model'] == 'tipo_de_cambio ~ inflacion', 'params'].values[0]
 
-# Convert the parameters to a dictionary
-params_tipo_de_cambio_tasa_de_interes = params_tipo_de_cambio_tasa_de_interes
-params_tasa_de_interes_inflacion = params_tasa_de_interes_inflacion
-params_tipo_de_cambio_inflacion = params_tipo_de_cambio_inflacion
 
 # Predict values using the model parameters
 def predict_tipo_de_cambio_tasa_de_interes(interes_rate):
